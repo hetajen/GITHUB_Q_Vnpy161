@@ -5,6 +5,10 @@
 1. 从通联数据下载历史行情的引擎
 2. 用来把MultiCharts导出的历史数据载入到MongoDB中用的函数
 3. 增加从通达信导出的历史数据载入到MongoDB中的函数
+
+History
+<id>            <author>        <description>
+2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
 """
 
 from datetime import datetime, timedelta
@@ -16,7 +20,10 @@ from ctaBase import *
 from vtConstant import *
 from vtFunction import loadMongoSetting
 from datayesClient import DatayesClient
-
+'''2017050301 Add by hetajen begin'''
+import json
+import urllib
+'''2017050301 Add by hetajen end'''
 
 # 以下为vn.trader和通联数据规定的交易所代码映射 
 VT_TO_DATAYES_EXCHANGE = {}
@@ -312,6 +319,70 @@ class HistoryDataEngine(object):
         else:
             print u'找不到合约%s' %symbol    
         
+
+
+#----------------------------------------------------------------------
+'''2017050301 Add by hetajen begin'''
+class XH_HistoryDataEngine(object):
+    """CTA模块用的历史数据引擎"""
+    def __init__(self):
+        """Constructor"""
+        host, port, logging = loadMongoSetting()
+        self.dbClient = pymongo.MongoClient(host, port)
+
+    def downloadFuturesDailyBarSina(self, symbol):
+        print u'开始下载%s日行情' % symbol
+
+        # 查询数据库中已有数据的最后日期
+        cl = self.dbClient[DAILY_DB_NAME][symbol]
+        cx = cl.find(sort=[('datetime', pymongo.DESCENDING)])
+        if cx.count():
+            last = cx[0]
+        else:
+            last = ''
+
+        # 主力合约
+        if '888' in symbol:
+            url = '%s%s' % (URL_SINA_HIST_D, symbol.replace('888', '0'))
+        # 交易合约
+        else:
+            url = '%s%s' % (URL_SINA_HIST_D, symbol)
+
+        # 开始下载数据
+        html = urllib.urlopen(url).read().decode('gb2312')
+        data = json.loads(html)
+        # data.reverse()
+
+        if data:
+            # 创建datetime索引
+            self.dbClient[DAILY_DB_NAME][symbol].ensure_index([('datetime', pymongo.ASCENDING)],
+                                                              unique=True)
+
+            for d in data:
+                bar = CtaBarData()
+                bar.vtSymbol = symbol
+                bar.symbol = symbol
+                try:
+                    # bar.exchange = DATAYES_TO_VT_EXCHANGE.get(d.get('exchangeCD', ''), '')
+                    bar.open = d[SINA_O]
+                    bar.high = d[SINA_H]
+                    bar.low = d[SINA_L]
+                    bar.close = d[SINA_C]
+                    bar.date = d[SINA_DATE].replace('-', '')
+                    bar.time = ''
+                    bar.datetime = datetime.strptime(bar.date, '%Y%m%d')
+                    bar.volume = d[SINA_VOL]
+                    #bar.openInterest = d.get('openInt', 0)
+                except KeyError:
+                    print d
+
+                flt = {'datetime': bar.datetime}
+                self.dbClient[DAILY_DB_NAME][symbol].update_one(flt, {'$set': bar.__dict__}, upsert=True)
+
+                print u'%s下载完成' % symbol
+        else:
+            print u'找不到合约%s' % symbol
+'''2017050301 Add by hetajen end'''
 
 
 #----------------------------------------------------------------------

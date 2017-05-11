@@ -8,6 +8,7 @@
 History
 <id>            <author>        <description>
 2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
 '''
 
 import json
@@ -150,11 +151,13 @@ class DrEngine(object):
         
         # 更新Tick数据
         if vtSymbol in self.tickDict:
-            self.insertData(TICK_DB_NAME, vtSymbol, drTick)
-            
-            if vtSymbol in self.activeSymbolDict:
-                activeSymbol = self.activeSymbolDict[vtSymbol]
-                self.insertData(TICK_DB_NAME, activeSymbol, drTick)
+            '''2017050301 Delete by hetajen begin'''
+            # self.insertData(TICK_DB_NAME, vtSymbol, drTick)
+            #
+            # if vtSymbol in self.activeSymbolDict:
+            #     activeSymbol = self.activeSymbolDict[vtSymbol]
+            #     self.insertData(TICK_DB_NAME, activeSymbol, drTick)
+            '''2017050301 Delete by hetajen end'''
             
             # 发出日志
             self.writeDrLog(text.TICK_LOGGING_MESSAGE.format(symbol=drTick.vtSymbol,
@@ -173,9 +176,11 @@ class DrEngine(object):
                     newBar = copy.copy(bar)
                     self.insertData(MINUTE_DB_NAME, vtSymbol, newBar)
                     
-                    if vtSymbol in self.activeSymbolDict:
-                        activeSymbol = self.activeSymbolDict[vtSymbol]
-                        self.insertData(MINUTE_DB_NAME, activeSymbol, newBar)                    
+                    '''2017050301 Delete by hetajen begin'''
+                    # if vtSymbol in self.activeSymbolDict:
+                    #     activeSymbol = self.activeSymbolDict[vtSymbol]
+                    #     self.insertData(MINUTE_DB_NAME, activeSymbol, newBar)
+                    '''2017050301 Delete by hetajen end'''
                     
                     self.writeDrLog(text.BAR_LOGGING_MESSAGE.format(symbol=bar.vtSymbol, 
                                                                     time=bar.time, 

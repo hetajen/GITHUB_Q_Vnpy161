@@ -2,6 +2,10 @@
 
 '''
 本文件包含了CTA引擎中的策略开发用模板，开发策略时需要继承CtaTemplate类。
+
+History
+<id>            <author>        <description>
+2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
 '''
 
 from ctaBase import *
@@ -19,6 +23,9 @@ class CtaTemplate(object):
     # MongoDB数据库的名称，K线数据库默认为1分钟
     tickDbName = TICK_DB_NAME
     barDbName = MINUTE_DB_NAME
+    '''2017050301 Add by hetajen begin'''
+    dailyDbName = DAILY_DB_NAME
+    '''2017050301 Add by hetajen end'''
     
     # 策略的基本参数
     name = EMPTY_UNICODE           # 策略实例名称
@@ -154,6 +161,13 @@ class CtaTemplate(object):
     def loadBar(self, days):
         """读取bar数据"""
         return self.ctaEngine.loadBar(self.barDbName, self.vtSymbol, days)
+    
+    #----------------------------------------------------------------------
+    '''2017050301 Add by hetajen begin'''
+    def loadDailyBar(self, days):
+        """读取日线bar数据"""
+        return self.ctaEngine.loadBar(self.dailyDbName, self.vtSymbol, days)
+    '''2017050301 Add by hetajen end'''
     
     #----------------------------------------------------------------------
     def writeCtaLog(self, content):

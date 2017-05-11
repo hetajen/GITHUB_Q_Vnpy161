@@ -2,6 +2,10 @@
 
 '''
 本文件中包含了CTA模块中用到的一些基础设置、类和常量等。
+
+History
+<id>            <author>        <description>
+2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
 '''
 
 from __future__ import division
@@ -42,6 +46,22 @@ ENGINETYPE_TRADING = 'trading'          # 实盘
 # CTA引擎中涉及的数据类定义
 from vtConstant import EMPTY_UNICODE, EMPTY_STRING, EMPTY_FLOAT, EMPTY_INT
 
+'''2017050301 Add by hetajen begin'''
+URL_SINA_HIST_D   = 'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesDailyKLine?symbol='
+URL_SINA_HIST_M1  = 'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesMiniKLine1m?symbol='
+URL_SINA_HIST_M5  = 'http://stock2.finance.sina.com.cn/futures/api/json.php/IndexService.getInnerFuturesMiniKLine5m?symbol='
+URL_SINA_REALTIME = 'http://hq.sinajs.cn/list='
+SINA_DATE = 0
+# open
+SINA_O = 1
+# high
+SINA_H = 2
+# low
+SINA_L = 3
+# close
+SINA_C = 4
+SINA_VOL = 5
+'''2017050301 Add by hetajen end'''
 
 ########################################################################
 class StopOrder(object):
