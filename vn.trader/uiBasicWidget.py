@@ -1,5 +1,11 @@
 # encoding: UTF-8
 
+'''
+History
+<id>            <author>        <description>
+2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+'''
+
 import json
 import csv
 import os
@@ -692,6 +698,13 @@ class TradingWidget(QtGui.QFrame):
         self.initUi()
         self.connectSignal()
 
+        '''2017050300 Add by hetajen begin'''
+        self.xhSymbols = self.getSubscribeSymbol()
+        for xhSymbol in self.xhSymbols:
+            self.lineSymbol.setText(xhSymbol)
+            self.updateSymbol()
+        '''2017050300 Add by hetajen end'''
+
     #----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
@@ -877,6 +890,22 @@ class TradingWidget(QtGui.QFrame):
         buttonSendOrder.clicked.connect(self.sendOrder)
         buttonCancelAll.clicked.connect(self.cancelAll)
         self.lineSymbol.returnPressed.connect(self.updateSymbol)
+
+    #----------------------------------------------------------------------
+    '''2017050300 Add by hetajen begin'''
+    def getSubscribeSymbol(self):
+        settingFileName = 'DR_setting.json'
+        path = os.path.join(os.path.abspath('.'), u'dataRecorder')
+        settingFileName = os.path.join(path, settingFileName)
+        symbols = []
+        with open(settingFileName) as f:
+            drSetting = json.load(f)
+            if 'bar' in drSetting:
+                barSettings = drSetting['bar']
+                for setting in barSettings:
+                    symbols.append(unicode(setting[0]))
+        return symbols
+    '''2017050300 Add by hetajen end'''
 
     #----------------------------------------------------------------------
     def updateSymbol(self):

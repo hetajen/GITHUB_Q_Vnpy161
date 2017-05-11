@@ -1,5 +1,11 @@
 # encoding: UTF-8
 
+'''
+History
+<id>            <author>        <description>
+2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+'''
+
 import sys
 import os
 import ctypes
@@ -18,7 +24,7 @@ SETTING_FILENAME = 'VT_setting.json'
 SETTING_FILENAME = os.path.join(path, SETTING_FILENAME)  
 
 #----------------------------------------------------------------------
-def main():
+def main(isInitCTP=False, isInitCTA=False, isInitDB=False): # 2017050300 Modify by hetajen
     """主程序入口"""
     # 重载sys模块，设置默认字符串编码方式为utf8
     reload(sys)
@@ -45,12 +51,25 @@ def main():
         pass
     
     # 初始化主引擎和主窗口对象
-    mainEngine = MainEngine()
-    mainWindow = MainWindow(mainEngine, mainEngine.eventEngine)
+    '''2017050300 Modify by hetajen begin'''
+    mainEngine = MainEngine(isInitCTP, isInitDB)
+    mainWindow = MainWindow(mainEngine, mainEngine.eventEngine, isInitCTA, isInitDB)
+    '''2017050300 Modify by hetajen end'''
     mainWindow.showMaximized()
     
     # 在主线程中启动Qt事件循环
     sys.exit(app.exec_())
     
 if __name__ == '__main__':
-    main()
+    '''2017050300 Modify by hetajen begin'''
+    argv = sys.argv
+    isInitCTP = True
+    isInitCTA = False
+    isInitDB = True
+    if len(argv) > 1:
+        isInitCTP = (unicode(argv[1]) == str(True))
+        isInitCTA = (unicode(argv[2]) == str(True))
+        isInitDB = (unicode(argv[3]) == str(True))
+
+    main(isInitCTP, isInitCTA, isInitDB)
+    '''2017050300 Modify by hetajen end'''

@@ -1,5 +1,11 @@
 # encoding: UTF-8
 
+'''
+History
+<id>            <author>        <description>
+2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+'''
+
 import psutil
 
 from gateway import GATEWAY_DICT
@@ -15,7 +21,7 @@ class MainWindow(QtGui.QMainWindow):
     signalStatusBar = QtCore.pyqtSignal(type(Event()))
 
     #----------------------------------------------------------------------
-    def __init__(self, mainEngine, eventEngine):
+    def __init__(self, mainEngine, eventEngine, isInitCTA, isInitDB): # 2017050300 Modify by hetajen
         """Constructor"""
         super(MainWindow, self).__init__()
         
@@ -27,6 +33,14 @@ class MainWindow(QtGui.QMainWindow):
         self.initUi()
         self.loadWindowSettings('custom')
         
+        '''2017050300 Modify by hetajen begin'''
+        self.isInitCTA = isInitCTA
+        if isInitCTA:
+            self.openCta()
+        if isInitDB:
+            self.openDr()
+        '''2017050300 Modify by hetajen end'''
+		
     #----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
@@ -202,7 +216,9 @@ class MainWindow(QtGui.QMainWindow):
         try:
             self.widgetDict['ctaM'].showMaximized()
         except KeyError:
-            self.widgetDict['ctaM'] = CtaEngineManager(self.mainEngine.ctaEngine, self.eventEngine)
+            '''2017050300 Modify by hetajen begin'''
+            self.widgetDict['ctaM'] = CtaEngineManager(self.mainEngine.ctaEngine, self.eventEngine, self.isInitCTA)
+            '''2017050300 Modify by hetajen end'''
             self.widgetDict['ctaM'].showMaximized()
             
     #----------------------------------------------------------------------

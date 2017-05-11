@@ -2,6 +2,10 @@
 
 '''
 CTA模块相关的GUI控制组件
+
+History
+<id>            <author>        <description>
+2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
 '''
 
 
@@ -150,7 +154,7 @@ class CtaEngineManager(QtGui.QWidget):
     signal = QtCore.pyqtSignal(type(Event()))
 
     #----------------------------------------------------------------------
-    def __init__(self, ctaEngine, eventEngine, parent=None):
+    def __init__(self, ctaEngine, eventEngine, isInitCTA, parent=None): # 2017050300 Modify by hetajen
         """Constructor"""
         super(CtaEngineManager, self).__init__(parent)
         
@@ -165,6 +169,11 @@ class CtaEngineManager(QtGui.QWidget):
         # 记录日志
         self.ctaEngine.writeCtaLog(text.CTA_ENGINE_STARTED)        
         
+        '''2017050300 Modify by hetajen begin'''
+        if isInitCTA:
+            self.xh_startCta()
+        '''2017050300 Modify by hetajen end'''
+	
     #----------------------------------------------------------------------
     def initUi(self):
         """初始化界面"""
@@ -275,8 +284,17 @@ class CtaEngineManager(QtGui.QWidget):
         event.accept()
         
         
+    #----------------------------------------------------------------------
+    '''2017050300 Modify by hetajen begin'''
+    def xh_startCta(self):
+        self.load()
+        self.initAll()
+        self.startAll()
     
-    
+    def xh_stopCta(self):
+        self.widgetDict['ctaM'].stopAll()
+        self.widgetDict['ctaM'].ctaEngine.savePosition()
+    '''2017050300 Modify by hetajen end'''
     
     
 

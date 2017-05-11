@@ -4,6 +4,10 @@
 本文件中实现了行情数据记录引擎，用于汇总TICK数据，并生成K线插入数据库。
 
 使用DR_setting.json来配置需要收集的合约，以及主力合约代码。
+
+History
+<id>            <author>        <description>
+2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
 '''
 
 import json
@@ -19,6 +23,9 @@ from vtGateway import VtSubscribeReq, VtLogData
 from drBase import *
 from vtFunction import todayDate
 from language import text
+'''2017050300 Add by hetajen begin'''
+from ctaHistoryData import XH_HistoryDataEngine
+'''2017050300 Add by hetajen end'''
 
 
 ########################################################################
@@ -202,6 +209,17 @@ class DrEngine(object):
         """注册事件监听"""
         self.eventEngine.register(EVENT_TICK, self.procecssTickEvent)
  
+    # ----------------------------------------------------------------------
+    '''2017050300 Add by hetajen begin'''
+    def insertDailyBar(self):
+        e = XH_HistoryDataEngine()
+        for vtSymbol in self.barDict:
+            e.downloadFuturesDailyBarSina(vtSymbol)
+            if vtSymbol in self.activeSymbolDict:
+                activeSymbol = self.activeSymbolDict[vtSymbol]
+                e.downloadFuturesDailyBarSina(activeSymbol)
+    '''2017050300 Add by hetajen end'''
+
     #----------------------------------------------------------------------
     def insertData(self, dbName, collectionName, data):
         """插入数据到数据库（这里的data可以是CtaTickData或者CtaBarData）"""

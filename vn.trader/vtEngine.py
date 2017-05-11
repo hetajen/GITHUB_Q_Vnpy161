@@ -1,5 +1,11 @@
 # encoding: UTF-8
 
+'''
+History
+<id>            <author>        <description>
+2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+'''
+
 import shelve
 from collections import OrderedDict
 from datetime import datetime
@@ -23,7 +29,7 @@ class MainEngine(object):
     """主引擎"""
 
     #----------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, isInitCTP, isInitDB): # 2017050300 Modify by hetajen
         """Constructor"""
         # 记录今日日期
         self.todayDate = datetime.now().strftime('%Y%m%d')
@@ -45,6 +51,14 @@ class MainEngine(object):
         self.ctaEngine = CtaEngine(self, self.eventEngine)
         self.drEngine = DrEngine(self, self.eventEngine)
         self.rmEngine = RmEngine(self, self.eventEngine)
+
+        '''2017050300 Add by hetajen begin'''
+        if isInitCTP:
+            self.connect('CTP')
+        if isInitDB:
+            self.dbConnect()
+            self.drEngine.insertDailyBar()
+        '''2017050300 Add by hetajen end'''
         
     #----------------------------------------------------------------------
     def initGateway(self):
