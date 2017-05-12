@@ -6,12 +6,15 @@ CTA模块相关的GUI控制组件
 History
 <id>            <author>        <description>
 2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+2017051201      hetajen         修改ctaStrategy下language目录名为ctaLanguage，避免多个language目录导致import找错路径
 '''
 
 
 from uiBasicWidget import QtGui, QtCore, BasicCell
 from eventEngine import *
-from language import text
+'''2017051201 Modify by hetajen begin'''
+from ctaLanguage import text
+'''2017051201 Modify by hetajen end'''
 
 
 ########################################################################
