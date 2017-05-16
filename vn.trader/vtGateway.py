@@ -1,5 +1,11 @@
 # encoding: UTF-8
 
+'''
+History
+<id>            <author>        <description>
+2017051500      hetajen         夜盘tick|bar数据增加tradingDay字段，用于指明夜盘tick|bar数据的真实交易日
+'''
+
 import time
 
 from eventEngine import *
@@ -174,6 +180,10 @@ class VtTickData(VtBaseData):
         self.openInterest = EMPTY_INT           # 持仓量
         self.time = EMPTY_STRING                # 时间 11:20:56.5
         self.date = EMPTY_STRING                # 日期 20151009
+        '''2017051500 Add by hetajen begin'''
+        self.tradingDay = EMPTY_STRING          # 交易日：上期所、中金所、大商所夜盘为下一日，郑商所夜盘为当日
+        self.actionDay = EMPTY_STRING           # 业务发生日：上期所、中金所夜盘为当日，大商所同交易日，郑商所为当日
+        '''2017051500 Add by hetajen end'''
         
         # 常规行情
         self.openPrice = EMPTY_FLOAT            # 今日开盘价
@@ -183,6 +193,11 @@ class VtTickData(VtBaseData):
         
         self.upperLimit = EMPTY_FLOAT           # 涨停价
         self.lowerLimit = EMPTY_FLOAT           # 跌停价
+
+        '''2017051500 Add by hetajen begin'''
+        self.closePrice = EMPTY_FLOAT           # 今收盘：盘中为空，盘后行情中提供
+        self.settlementPrice = EMPTY_FLOAT      # 今结算价：盘中为空，盘后行情中提供
+        '''2017051500 Add by hetajen end'''
         
         # 五档行情
         self.bidPrice1 = EMPTY_FLOAT

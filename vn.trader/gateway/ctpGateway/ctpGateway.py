@@ -5,6 +5,10 @@ vn.ctp的gateway接入
 
 考虑到现阶段大部分CTP中的ExchangeID字段返回的都是空值
 vtSymbol直接使用symbol
+
+History
+<id>            <author>        <description>
+2017051500      hetajen         夜盘tick|bar数据增加tradingDay字段，用于指明夜盘tick|bar数据的真实交易日
 '''
 
 
@@ -351,6 +355,10 @@ class CtpMdApi(MdApi):
         # 这里由于交易所夜盘时段的交易日数据有误，所以选择本地获取
         #tick.date = data['TradingDay']
         tick.date = datetime.now().strftime('%Y%m%d')   
+        '''2017051500 Add by hetajen begin'''
+        tick.actionDay = data['ActionDay']
+        tick.tradingDay = data['TradingDay']
+        '''2017051500 Add by hetajen end'''
         
         tick.openPrice = data['OpenPrice']
         tick.highPrice = data['HighestPrice']
@@ -359,7 +367,12 @@ class CtpMdApi(MdApi):
         
         tick.upperLimit = data['UpperLimitPrice']
         tick.lowerLimit = data['LowerLimitPrice']
-        
+
+        '''2017051500 Add by hetajen begin'''
+        tick.closePrice = data['ClosePrice']
+        tick.settlementPrice = data['SettlementPrice']
+        '''2017051500 Add by hetajen end'''
+
         # CTP只有一档行情
         tick.bidPrice1 = data['BidPrice1']
         tick.bidVolume1 = data['BidVolume1']

@@ -9,6 +9,7 @@ History
 <id>            <author>        <description>
 2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
 2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
+2017051500      hetajen         夜盘tick|bar数据增加tradingDay字段，用于指明夜盘tick|bar数据的真实交易日
 '''
 
 import json
@@ -197,7 +198,12 @@ class DrEngine(object):
                 bar.high = drTick.lastPrice
                 bar.low = drTick.lastPrice
                 bar.close = drTick.lastPrice
-                
+
+                '''2017051500 Add by hetajen begin'''
+                bar.tradingDay = drTick.tradingDay
+                bar.actionDay = drTick.actionDay
+                '''2017051500 Add by hetajen end'''
+
                 bar.date = drTick.date
                 bar.time = drTick.time
                 bar.datetime = drTick.datetime
