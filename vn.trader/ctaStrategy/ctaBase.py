@@ -6,6 +6,7 @@
 History
 <id>            <author>        <description>
 2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
+2017051500      hetajen         夜盘tick|bar数据增加tradingDay字段，用于指明夜盘tick|bar数据的真实交易日
 '''
 
 from __future__ import division
@@ -101,6 +102,10 @@ class CtaBarData(object):
         self.date = EMPTY_STRING            # bar开始的时间，日期
         self.time = EMPTY_STRING            # 时间
         self.datetime = None                # python的datetime时间对象
+        '''2017051500 Add by hetajen begin'''
+        self.tradingDay = EMPTY_STRING      # 交易日：上期所、中金所、大商所夜盘为下一日，郑商所夜盘为当日
+        self.actionDay = EMPTY_STRING       # 业务发生日：上期所、中金所夜盘为当日，大商所同交易日，郑商所为当日
+        '''2017051500 Add by hetajen end'''
         
         self.volume = EMPTY_INT             # 成交量
         self.openInterest = EMPTY_INT       # 持仓量
@@ -129,6 +134,10 @@ class CtaTickData(object):
         self.date = EMPTY_STRING            # 日期
         self.time = EMPTY_STRING            # 时间
         self.datetime = None                # python的datetime时间对象
+        '''2017051500 Add by hetajen begin'''
+        self.tradingDay = EMPTY_STRING      # 交易日：上期所、中金所、大商所夜盘为下一日，郑商所夜盘为当日
+        self.actionDay = EMPTY_STRING       # 业务发生日：上期所、中金所夜盘为当日，大商所同交易日，郑商所为当日
+        '''2017051500 Add by hetajen end'''
         
         # 五档行情
         self.bidPrice1 = EMPTY_FLOAT
