@@ -368,11 +368,15 @@ class XH_HistoryDataEngine(object):
                     bar.high = d[SINA_H]
                     bar.low = d[SINA_L]
                     bar.close = d[SINA_C]
-                    bar.date = d[SINA_DATE].replace('-', '')
-                    bar.time = ''
-                    bar.datetime = datetime.strptime(bar.date, '%Y%m%d')
-                    bar.volume = d[SINA_VOL]
-                    #bar.openInterest = d.get('openInt', 0)
+
+                    bar.datetime = datetime.strptime(d[SINA_DATE], '%Y-%m-%d')
+                    bar.date = bar.datetime.strftime('%Y%m%d')
+                    bar.time = bar.datetime.strftime('%H:%M:%S')
+                    bar.actionDay = bar.date
+                    bar.tradingDay = bar.date
+
+                    # bar.volume = d[SINA_VOL]
+                    # bar.openInterest = d.get('openInt', 0)
                 except KeyError:
                     print d
 
