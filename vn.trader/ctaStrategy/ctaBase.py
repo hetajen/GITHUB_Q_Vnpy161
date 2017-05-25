@@ -7,6 +7,7 @@ History
 <id>            <author>        <description>
 2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
 2017051500      hetajen         夜盘tick|bar数据增加tradingDay字段，用于指明夜盘tick|bar数据的真实交易日
+2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
 '''
 
 from __future__ import division
@@ -39,6 +40,9 @@ POSITION_DB_NAME = 'VnTrader_Position_Db'
 TICK_DB_NAME = 'VnTrader_Tick_Db'
 DAILY_DB_NAME = 'VnTrader_Daily_Db'
 MINUTE_DB_NAME = 'VnTrader_1Min_Db'
+'''2017052500 Add by hetajen begin'''
+MINUTE5_DB_NAME = 'VnTrader_5Min_Db'
+'''2017052500 Add by hetajen end'''
 
 # 引擎类型，用于区分当前策略的运行环境
 ENGINETYPE_BACKTESTING = 'backtesting'  # 回测

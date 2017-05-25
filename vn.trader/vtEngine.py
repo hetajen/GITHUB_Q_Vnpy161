@@ -4,6 +4,7 @@
 History
 <id>            <author>        <description>
 2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
+2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
 '''
 
 import shelve
@@ -58,6 +59,9 @@ class MainEngine(object):
         if isInitDB:
             self.dbConnect()
             self.drEngine.insertDailyBar()
+            '''2017052500 Add by hetajen begin'''
+            self.drEngine.insert5MinBar()
+            '''2017052500 Add by hetajen end'''
         '''2017050300 Add by hetajen end'''
         
     #----------------------------------------------------------------------

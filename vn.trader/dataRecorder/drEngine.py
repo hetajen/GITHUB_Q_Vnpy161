@@ -10,6 +10,7 @@ History
 2017050300      hetajen         Bat[Auto-CTP连接][Auto-Symbol订阅][Auto-DB写入][Auto-CTA加载]
 2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
 2017051500      hetajen         夜盘tick|bar数据增加tradingDay字段，用于指明夜盘tick|bar数据的真实交易日
+2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
 '''
 
 import json
@@ -230,6 +231,17 @@ class DrEngine(object):
                 activeSymbol = self.activeSymbolDict[vtSymbol]
                 e.downloadFuturesDailyBarSina(activeSymbol)
     '''2017050300 Add by hetajen end'''
+
+    # ----------------------------------------------------------------------
+    '''2017052500 Add by hetajen begin'''
+    def insert5MinBar(self):
+        e = XH_HistoryDataEngine()
+        for vtSymbol in self.barDict:
+            e.downloadFutures5MinBarSina(vtSymbol)
+            if vtSymbol in self.activeSymbolDict:
+                activeSymbol = self.activeSymbolDict[vtSymbol]
+                e.downloadFutures5MinBarSina(activeSymbol)
+    '''2017052500 Add by hetajen end'''
 
     #----------------------------------------------------------------------
     def insertData(self, dbName, collectionName, data):

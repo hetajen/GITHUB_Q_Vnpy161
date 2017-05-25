@@ -6,6 +6,7 @@
 History
 <id>            <author>        <description>
 2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
+2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
 '''
 
 from ctaBase import *
@@ -23,6 +24,9 @@ class CtaTemplate(object):
     # MongoDB数据库的名称，K线数据库默认为1分钟
     tickDbName = TICK_DB_NAME
     barDbName = MINUTE_DB_NAME
+    '''2017052500 Add by hetajen begin'''
+    bar5DbName = MINUTE5_DB_NAME
+    '''2017052500 Add by hetajen end'''
     '''2017050301 Add by hetajen begin'''
     dailyDbName = DAILY_DB_NAME
     '''2017050301 Add by hetajen end'''
@@ -162,6 +166,13 @@ class CtaTemplate(object):
         """读取bar数据"""
         return self.ctaEngine.loadBar(self.barDbName, self.vtSymbol, days)
     
+    #----------------------------------------------------------------------
+    '''2017052500 Add by hetajen begin'''
+    def loadBar5(self, days):
+        """读取5分钟bar数据"""
+        return self.ctaEngine.loadBar(self.bar5DbName, self.vtSymbol, days)
+    '''2017052500 Add by hetajen end'''
+
     #----------------------------------------------------------------------
     '''2017050301 Add by hetajen begin'''
     def loadDailyBar(self, days):

@@ -9,6 +9,7 @@
 History
 <id>            <author>        <description>
 2017050301      hetajen         DB[CtaTemplate增加日线bar数据获取接口][Mongo不保存Tick数据][新增数据来源Sina]
+2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
 """
 
 from datetime import datetime, timedelta
@@ -329,6 +330,65 @@ class XH_HistoryDataEngine(object):
         """Constructor"""
         host, port, logging = loadMongoSetting()
         self.dbClient = pymongo.MongoClient(host, port)
+
+    '''2017052500 Add by hetajen begin'''
+    def downloadFutures5MinBarSina(self, symbol):
+        print u'开始下载%s的5分钟行情' % symbol
+        # 查询数据库中已有数据的最后日期
+        cl = self.dbClient[MINUTE5_DB_NAME][symbol]
+        cx = cl.find(sort=[('datetime', pymongo.DESCENDING)])
+        if cx.count():
+            last = cx[0]
+        else:
+            last = ''
+
+        # 主力合约
+        if '888' in symbol:
+            url = '%s%s' % (URL_SINA_HIST_M5, symbol.replace('888', '0'))
+        # 交易合约
+        else:
+            url = '%s%s' % (URL_SINA_HIST_M5, symbol)
+
+        # 开始下载数据
+        html = urllib.urlopen(url).read().decode('gb2312')
+        data = json.loads(html)
+        # data.reverse()
+
+        if data:
+            # 创建datetime索引
+            self.dbClient[MINUTE5_DB_NAME][symbol].ensure_index([('datetime', pymongo.ASCENDING)],
+                                                              unique=True)
+
+            for d in data:
+                bar = CtaBarData()
+                bar.vtSymbol = symbol
+                bar.symbol = symbol
+                try:
+                    # bar.exchange = DATAYES_TO_VT_EXCHANGE.get(d.get('exchangeCD', ''), '')
+                    bar.open = d[SINA_O]
+                    bar.high = d[SINA_H]
+                    bar.low = d[SINA_L]
+                    bar.close = d[SINA_C]
+
+                    bar.datetime = datetime.strptime(d[SINA_DATE], '%Y-%m-%d %H:%M:%S')
+                    bar.datetime = bar.datetime - timedelta(minutes=5) # Sina接口的数据有误，So要对5分钟Bar的时间数据进行清洗
+                    bar.date = bar.datetime.strftime('%Y%m%d')
+                    bar.time = bar.datetime.strftime('%H:%M:%S')
+                    bar.actionDay = bar.date
+                    bar.tradingDay = bar.date
+
+                    # bar.volume = d[SINA_VOL]
+                    # bar.openInterest = d.get('openInt', 0)
+                except KeyError:
+                    print d
+
+                flt = {'datetime': bar.datetime}
+                self.dbClient[MINUTE5_DB_NAME][symbol].update_one(flt, {'$set': bar.__dict__}, upsert=True)
+
+                print u'%s下载完成' % symbol
+        else:
+            print u'找不到合约%s' % symbol
+    '''2017052500 Add by hetajen end'''
 
     def downloadFuturesDailyBarSina(self, symbol):
         print u'开始下载%s日行情' % symbol
