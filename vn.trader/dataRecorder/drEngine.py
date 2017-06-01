@@ -27,7 +27,9 @@ from drBase import *
 from vtFunction import todayDate
 from language import text
 '''2017050300 Add by hetajen begin'''
-from ctaHistoryData import XH_HistoryDataEngine
+'''2017052500 Add by hetajen begin'''
+from ctaHistoryData import XH_HistoryDataEngine, HistoryDataEngine
+'''2017052500 Add by hetajen end'''
 '''2017050300 Add by hetajen end'''
 
 
@@ -241,6 +243,11 @@ class DrEngine(object):
             if vtSymbol in self.activeSymbolDict:
                 activeSymbol = self.activeSymbolDict[vtSymbol]
                 e.downloadFutures5MinBarSina(activeSymbol)
+
+    def insertTradeCal(self):
+        e = HistoryDataEngine()
+        e.loadTradeCal()
+        # e.loadTradeCal()
     '''2017052500 Add by hetajen end'''
 
     #----------------------------------------------------------------------

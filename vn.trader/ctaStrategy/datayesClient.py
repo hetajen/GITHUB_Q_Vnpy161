@@ -1,12 +1,21 @@
 # encoding: UTF-8
 
-'''一个简单的通联数据客户端，主要使用requests开发，比通联官网的python例子更为简洁。'''
+'''
+一个简单的通联数据客户端，主要使用requests开发，比通联官网的python例子更为简洁。
+
+History
+<id>            <author>        <description>
+2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
+'''
 
 
 import requests
 import json
+'''2017052500 Add by hetajen begin'''
+import os
+'''2017052500 Add by hetajen end'''
 
-FILENAME = 'datayes.json'
+# FILENAME = 'datayes.json' '''2017052500 Delete by hetajen'''
 HTTP_OK = 200
 
 
@@ -32,7 +41,9 @@ class DatayesClient(object):
         """载入配置"""
         try:
             path = os.path.abspath(os.path.dirname(__file__))
-            FILENAME = os.path.join(path, FILENAME)            
+            '''2017052500 Add by hetajen begin'''
+            FILENAME = os.path.join(path, 'datayes.json')
+            '''2017052500 Add by hetajen end'''
             f = file(FILENAME)
         except IOError:
             print u'%s无法打开配置文件' % self.name

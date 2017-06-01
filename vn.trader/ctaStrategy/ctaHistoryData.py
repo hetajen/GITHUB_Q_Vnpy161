@@ -12,9 +12,12 @@ History
 2017052500      hetajen         DB[增加：5分钟Bar数据的记录、存储和获取]
 """
 
-from datetime import datetime, timedelta
+'''2017052500 Add by hetajen begin'''
+import os
+import datetime
+import time
 import pymongo
-from time import time
+'''2017052500 Add by hetajen end'''
 from multiprocessing.pool import ThreadPool
 
 from ctaBase import *
@@ -50,8 +53,10 @@ class HistoryDataEngine(object):
     #----------------------------------------------------------------------
     def lastTradeDate(self):
         """获取最近交易日（只考虑工作日，无法检查国内假期）"""
-        today = datetime.now()
-        oneday = timedelta(1)
+        '''2017052500 Add by hetajen begin'''
+        today = datetime.datetime.now()
+        oneday = datetime.timedelta(1)
+        '''2017052500 Add by hetajen end'''
         
         if today.weekday() == 5:
             today = today - oneday
@@ -59,6 +64,93 @@ class HistoryDataEngine(object):
             today = today - oneday*2        
         
         return today.strftime('%Y%m%d')
+
+    # ----------------------------------------------------------------------
+    '''2017052500 Add by hetajen begin'''
+    def loadTradeCal(self):
+        import csv
+        fileName = os.path.join(os.path.dirname(os.path.abspath(__file__)), u'TradeCal.csv')
+        dbName = SETTING_DB_NAME
+        collectionName = 'TradeCal'
+
+        # 锁定集合，并创建索引
+        host, port, logging = loadMongoSetting()
+
+        client = pymongo.MongoClient(host, port)
+        collection = client[dbName][collectionName]
+        collection.ensure_index([('calendarDate', pymongo.ASCENDING)], unique=True)
+
+        # 读取数据和插入到数据库
+        reader = csv.reader(file(fileName, 'r'))
+
+        calendarsTmp = []
+        calendars = []
+        filterHeaders = True # 过滤表头
+        nextTradeDate = None
+        for d in reader:
+            if filterHeaders:
+                filterHeaders = False
+                continue
+            calendarDict = {}
+            calendarDict['exchangeCD'] = d[0]
+            calendarDict['calendarDate'] = datetime.datetime.strptime(d[1].replace('/', ''), '%Y%m%d')
+            calendarDict['isOpen'] = d[2]
+            if (d[3] != ''):
+                calendarDict['prevTradeDate'] = datetime.datetime.strptime(d[3].replace('/', ''), '%Y%m%d')
+            else:
+                calendarDict['prevTradeDate'] = None
+            calendarDict['isWeekEnd'] = d[4]
+            calendarDict['isMonthEnd'] = d[5]
+            calendarDict['isQuarterEnd'] = d[6]
+            calendarDict['isYearEnd'] = d[7]
+            calendarsTmp.append(calendarDict)
+        calendarsTmp.reverse()
+
+        for calendarDict in calendarsTmp:
+            calendarDict['nextTradeDate'] = nextTradeDate
+            calendars.append(calendarDict)
+            if calendarDict['isOpen'] == '1':
+                nextTradeDate = calendarDict['calendarDate']
+        # calendars.reverse()
+
+        for calendarDict in calendars:
+            flt = {'calendarDate': calendarDict['calendarDate']}
+            collection.update_one(flt, {'$set': calendarDict}, upsert=True)
+
+    def downloadTradeCal(self):
+        """下载交易所交易日历"""
+        self.dbClient[SETTING_DB_NAME]['TradeCal'].ensure_index([('calendarDate', pymongo.ASCENDING)],
+                                                                     unique=True)
+
+        path = 'api/master/getTradeCal.json'
+
+        params = {}
+        # params['field'] = ''
+        params['exchangeCD'] = 'XSGE'
+        params['beginDate'] = datetime.date(2008, 1, 1)
+        params['endDate'] = datetime.datetime.today().date()
+
+        data = self.datayesClient.downloadData(path, params)
+
+        if data:
+            for d in data:
+                calendarDict = {}
+                calendarDict['exchangeCD'] = d['exchangeCD']
+                calendarDict['calendarDate'] = d['calendarDate']
+                calendarDict['isOpen'] = d['isOpen']
+                calendarDict['prevTradeDate'] = d['prevTradeDate']
+                calendarDict['isWeekEnd'] = d['isWeekEnd']
+                calendarDict['isMonthEnd'] = d['isMonthEnd']
+                calendarDict['isQuarterEnd'] = d['isQuarterEnd']
+                calendarDict['isYearEnd'] = d['isYearEnd']
+                flt = {'calendarDate': d['calendarDate']}
+
+                self.dbClient[SETTING_DB_NAME]['TradeCal'].update_one(flt, {'$set': calendarDict},
+                                                                           upsert=True)
+            print u'TradeCal下载完成'
+        else:
+            print u'TradeCal下载失败'
+    '''2017052500 Add by hetajen end'''
     
     #----------------------------------------------------------------------
     def readFuturesProductSymbol(self):
@@ -156,7 +248,9 @@ class HistoryDataEngine(object):
                     bar.close = d.get('closePrice', 0)
                     bar.date = d.get('tradeDate', '').replace('-', '')
                     bar.time = ''
-                    bar.datetime = datetime.strptime(bar.date, '%Y%m%d')
+                    '''2017052500 Add by hetajen begin'''
+                    bar.datetime = datetime.datetime.strptime(bar.date, '%Y%m%d')
+                    '''2017052500 Add by hetajen end'''
                     bar.volume = d.get('turnoverVol', 0)
                     bar.openInterest = d.get('openInt', 0)
                 except KeyError:
@@ -172,7 +266,9 @@ class HistoryDataEngine(object):
     #----------------------------------------------------------------------
     def downloadAllFuturesDailyBar(self):
         """下载所有期货的主力合约日行情"""
-        start = time()
+        '''2017052500 Add by hetajen begin'''
+        start = time.time()
+        '''2017052500 Add by hetajen end'''
         print u'开始下载所有期货的主力合约日行情'
         
         productSymbolSet = self.readFuturesProductSymbol()
@@ -189,7 +285,9 @@ class HistoryDataEngine(object):
         for productSymbol in productSymbolSet:
             self.downloadFuturesDailyBar(productSymbol+'0000')
 
-        print u'所有期货的主力合约日行情已经全部下载完成, 耗时%s秒' %(time()-start)
+        '''2017052500 Add by hetajen begin'''
+        print u'所有期货的主力合约日行情已经全部下载完成, 耗时%s秒' %(time.time()-start)
+        '''2017052500 Add by hetajen end'''
         
     #----------------------------------------------------------------------
     def downloadFuturesIntradayBar(self, symbol):
@@ -224,7 +322,9 @@ class HistoryDataEngine(object):
                     bar.close = d.get('closePrice', 0)
                     bar.date = today
                     bar.time = d.get('barTime', '')
-                    bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M')
+                    '''2017052500 Add by hetajen begin'''
+                    bar.datetime = datetime.datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M')
+                    '''2017052500 Add by hetajen end'''
                     bar.volume = d.get('totalVolume', 0)
                     bar.openInterest = 0
                 except KeyError:
@@ -308,7 +408,9 @@ class HistoryDataEngine(object):
                     bar.close = d.get('closePrice', 0)
                     bar.date = d.get('tradeDate', '').replace('-', '')
                     bar.time = ''
-                    bar.datetime = datetime.strptime(bar.date, '%Y%m%d')
+                    '''2017052500 Add by hetajen begin'''
+                    bar.datetime = datetime.datetime.strptime(bar.date, '%Y%m%d')
+                    '''2017052500 Add by hetajen end'''
                     bar.volume = d.get('turnoverVol', 0)
                 except KeyError:
                     print d
@@ -370,12 +472,16 @@ class XH_HistoryDataEngine(object):
                     bar.low = d[SINA_L]
                     bar.close = d[SINA_C]
 
-                    bar.datetime = datetime.strptime(d[SINA_DATE], '%Y-%m-%d %H:%M:%S')
-                    bar.datetime = bar.datetime - timedelta(minutes=5) # Sina接口的数据有误，So要对5分钟Bar的时间数据进行清洗
+                    bar.datetime = datetime.datetime.strptime(d[SINA_DATE], '%Y-%m-%d %H:%M:%S')
+                    bar.datetime = bar.datetime - datetime.timedelta(minutes=5) # Sina接口的数据有误，So要对5分钟Bar的时间数据进行清洗
                     bar.date = bar.datetime.strftime('%Y%m%d')
                     bar.time = bar.datetime.strftime('%H:%M:%S')
                     bar.actionDay = bar.date
-                    bar.tradingDay = bar.date
+                    if bar.datetime.time() > datetime.time(hour=20, minute=0):
+                        calendarDict = self.dbClient[SETTING_DB_NAME]['TradeCal'].find_one({'calendarDate':datetime.datetime.strptime(bar.date, '%Y%m%d')})
+                        bar.tradingDay = calendarDict['nextTradeDate'].strftime('%Y%m%d')
+                    else:
+                        bar.tradingDay = bar.date
 
                     # bar.volume = d[SINA_VOL]
                     # bar.openInterest = d.get('openInt', 0)
@@ -429,7 +535,9 @@ class XH_HistoryDataEngine(object):
                     bar.low = d[SINA_L]
                     bar.close = d[SINA_C]
 
-                    bar.datetime = datetime.strptime(d[SINA_DATE], '%Y-%m-%d')
+                    '''2017052500 Add by hetajen begin'''
+                    bar.datetime = datetime.datetime.strptime(d[SINA_DATE], '%Y-%m-%d')
+                    '''2017052500 Add by hetajen end'''
                     bar.date = bar.datetime.strftime('%Y%m%d')
                     bar.time = bar.datetime.strftime('%H:%M:%S')
                     bar.actionDay = bar.date
@@ -487,7 +595,9 @@ def downloadEquityDailyBarts(self, symbol):
                     bar.close = d.get('close')
                     bar.date = d.get('date').replace('-', '')
                     bar.time = ''
-                    bar.datetime = datetime.strptime(bar.date, '%Y%m%d')
+                    '''2017052500 Add by hetajen begin'''
+                    bar.datetime = datetime.datetime.strptime(bar.date, '%Y%m%d')
+                    '''2017052500 Add by hetajen end'''
                     bar.volume = d.get('volume')
                 except KeyError:
                     print d
@@ -503,7 +613,9 @@ def loadMcCsv(fileName, dbName, symbol):
     """将Multicharts导出的csv格式的历史数据插入到Mongo数据库中"""
     import csv
     
-    start = time()
+    '''2017052500 Add by hetajen begin'''
+    start = time.time()
+    '''2017052500 Add by hetajen end'''
     print u'开始读取CSV文件%s中的数据插入到%s的%s中' %(fileName, dbName, symbol)
     
     # 锁定集合，并创建索引
@@ -523,23 +635,29 @@ def loadMcCsv(fileName, dbName, symbol):
         bar.high = float(d['High'])
         bar.low = float(d['Low'])
         bar.close = float(d['Close'])
-        bar.date = datetime.strptime(d['Date'], '%Y-%m-%d').strftime('%Y%m%d')
+        '''2017052500 Add by hetajen begin'''
+        bar.date = datetime.datetime.strptime(d['Date'], '%Y-%m-%d').strftime('%Y%m%d')
         bar.time = d['Time']
-        bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+        bar.datetime = datetime.datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+        '''2017052500 Add by hetajen end'''
         bar.volume = d['TotalVolume']
 
         flt = {'datetime': bar.datetime}
         collection.update_one(flt, {'$set':bar.__dict__}, upsert=True)  
         print bar.date, bar.time
     
-    print u'插入完毕，耗时：%s' % (time()-start)
+    '''2017052500 Add by hetajen begin'''
+    print u'插入完毕，耗时：%s' % (time.time()-start)
+    '''2017052500 Add by hetajen end'''
 
 #----------------------------------------------------------------------
 def loadTdxCsv(fileName, dbName, symbol):
     """将通达信导出的csv格式的历史分钟数据插入到Mongo数据库中"""
     import csv
     
-    start = time()
+    '''2017052500 Add by hetajen begin'''
+    start = time.time()
+    '''2017052500 Add by hetajen end'''
     print u'开始读取CSV文件%s中的数据插入到%s的%s中' %(fileName, dbName, symbol)
     
     # 锁定集合，并创建索引
@@ -559,9 +677,11 @@ def loadTdxCsv(fileName, dbName, symbol):
         bar.high = float(d[3])
         bar.low = float(d[4])
         bar.close = float(d[5])
-        bar.date = datetime.strptime(d[0], '%Y/%m/%d').strftime('%Y%m%d')
+        '''2017052500 Add by hetajen begin'''
+        bar.date = datetime.datetime.strptime(d[0], '%Y/%m/%d').strftime('%Y%m%d')
         bar.time = d[1][:2]+':'+d[1][2:4]+':00'
-        bar.datetime = datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+        bar.datetime = datetime.datetime.strptime(bar.date + ' ' + bar.time, '%Y%m%d %H:%M:%S')
+        '''2017052500 Add by hetajen end'''
         bar.volume = d[6]
         bar.openInterest = d[7]
 
@@ -569,7 +689,9 @@ def loadTdxCsv(fileName, dbName, symbol):
         collection.update_one(flt, {'$set':bar.__dict__}, upsert=True)  
         print bar.date, bar.time
     
-    print u'插入完毕，耗时：%s' % (time()-start)
+    '''2017052500 Add by hetajen begin'''
+    print u'插入完毕，耗时：%s' % (time.time()-start)
+    '''2017052500 Add by hetajen end'''
     
 #----------------------------------------------------------------------
 def loadTBCsv(fileName, dbName, symbol):
@@ -580,7 +702,9 @@ def loadTBCsv(fileName, dbName, symbol):
     """
     import csv
     
-    start = time()
+    '''2017052500 Add by hetajen begin'''
+    start = time.time()
+    '''2017052500 Add by hetajen end'''
     print u'开始读取CSV文件%s中的数据插入到%s的%s中' %(fileName, dbName, symbol)
     
     # 锁定集合，并创建索引
@@ -598,7 +722,9 @@ def loadTBCsv(fileName, dbName, symbol):
             bar.vtSymbol = symbol
             bar.symbol = symbol
             
-            bar.datetime = datetime.strptime(d[0], '%Y/%m/%d %H:%M')
+            '''2017052500 Add by hetajen begin'''
+            bar.datetime = datetime.datetime.strptime(d[0], '%Y/%m/%d %H:%M')
+            '''2017052500 Add by hetajen end'''
             bar.date = bar.datetime.date().strftime('%Y%m%d')
             bar.time = bar.datetime.time().strftime('%H:%M:%S')
             
@@ -614,7 +740,9 @@ def loadTBCsv(fileName, dbName, symbol):
             collection.update_one(flt, {'$set':bar.__dict__}, upsert=True)
             print '%s \t %s' % (bar.date, bar.time)
     
-    print u'插入完毕，耗时：%s' % (time()-start)
+    '''2017052500 Add by hetajen begin'''
+    print u'插入完毕，耗时：%s' % (time.time()-start)
+    '''2017052500 Add by hetajen end'''
     
     
 if __name__ == '__main__':
