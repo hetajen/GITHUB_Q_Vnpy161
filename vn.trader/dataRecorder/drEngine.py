@@ -247,7 +247,7 @@ class DrEngine(object):
     def insertTradeCal(self):
         e = HistoryDataEngine()
         e.loadTradeCal()
-        # e.loadTradeCal()
+        # e.downloadTradeCal()
     '''2017052500 Add by hetajen end'''
 
     #----------------------------------------------------------------------

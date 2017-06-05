@@ -58,9 +58,9 @@ class MainEngine(object):
             self.connect('CTP')
         if isInitDB:
             self.dbConnect()
-            self.drEngine.insertDailyBar()
             '''2017052500 Add by hetajen begin'''
             self.drEngine.insertTradeCal()
+            self.drEngine.insertDailyBar()
             self.drEngine.insert5MinBar()
             '''2017052500 Add by hetajen end'''
         '''2017050300 Add by hetajen end'''

@@ -68,21 +68,26 @@ class HistoryDataEngine(object):
     # ----------------------------------------------------------------------
     '''2017052500 Add by hetajen begin'''
     def loadTradeCal(self):
-        import csv
-        fileName = os.path.join(os.path.dirname(os.path.abspath(__file__)), u'TradeCal.csv')
+        print u'Trade Calendar load from csv, BEGIN'
+
+        '''数据库'''
         dbName = SETTING_DB_NAME
         collectionName = 'TradeCal'
+        collection = self.dbClient[dbName][collectionName]
+        collection.ensure_index([('calendarDate', pymongo.ASCENDING)], unique=True) # 创建索引
+        # 查询数据库中已有数据的最后日期
+        cx = collection.find(sort=[('calendarDate', pymongo.DESCENDING)])
+        if cx.count():
+            last = cx[0][u'calendarDate']
+        else:
+            last = datetime.datetime(1990, 12, 31, 23, 59, 59)
 
-        # 锁定集合，并创建索引
-        host, port, logging = loadMongoSetting()
-
-        client = pymongo.MongoClient(host, port)
-        collection = client[dbName][collectionName]
-        collection.ensure_index([('calendarDate', pymongo.ASCENDING)], unique=True)
-
-        # 读取数据和插入到数据库
+        '''数据源'''
+        import csv
+        fileName = os.path.join(os.path.dirname(os.path.abspath(__file__)), u'strategy\TradeCal.csv')
         reader = csv.reader(file(fileName, 'r'))
 
+        '''数据解析&持久化'''
         calendarsTmp = []
         calendars = []
         filterHeaders = True # 过滤表头
@@ -91,9 +96,13 @@ class HistoryDataEngine(object):
             if filterHeaders:
                 filterHeaders = False
                 continue
+
             calendarDict = {}
-            calendarDict['exchangeCD'] = d[0]
             calendarDict['calendarDate'] = datetime.datetime.strptime(d[1].replace('/', ''), '%Y%m%d')
+            if calendarDict['calendarDate'] < last:
+                continue
+
+            calendarDict['exchangeCD'] = d[0]
             calendarDict['isOpen'] = d[2]
             if (d[3] != ''):
                 calendarDict['prevTradeDate'] = datetime.datetime.strptime(d[3].replace('/', ''), '%Y%m%d')
@@ -117,21 +126,32 @@ class HistoryDataEngine(object):
             flt = {'calendarDate': calendarDict['calendarDate']}
             collection.update_one(flt, {'$set': calendarDict}, upsert=True)
 
+        print u'Trade Calendar load from csv, End'
+
     def downloadTradeCal(self):
-        """下载交易所交易日历"""
-        self.dbClient[SETTING_DB_NAME]['TradeCal'].ensure_index([('calendarDate', pymongo.ASCENDING)],
-                                                                     unique=True)
+        print u'Trade Calendar download from datayes, BEGIN'
 
+        '''数据库'''
+        dbName = SETTING_DB_NAME
+        collectionName = 'TradeCal'
+        collection = self.dbClient[dbName][collectionName]
+        collection.ensure_index([('calendarDate', pymongo.ASCENDING)], unique=True) # 创建索引
+        # 查询数据库中已有数据的最后日期
+        cx = collection.find(sort=[('calendarDate', pymongo.DESCENDING)])
+        if cx.count():
+            last = cx[0][u'calendarDate']
+        else:
+            last = datetime.datetime(1990, 12, 31, 23, 59, 59)
+
+        '''数据源'''
         path = 'api/master/getTradeCal.json'
-
         params = {}
         # params['field'] = ''
         params['exchangeCD'] = 'XSGE'
-        params['beginDate'] = datetime.date(2008, 1, 1)
-        params['endDate'] = datetime.datetime.today().date()
-
+        params['beginDate'] = unicode(last.date())
         data = self.datayesClient.downloadData(path, params)
 
+        '''数据解析&持久化'''
         if data:
             for d in data:
                 calendarDict = {}
@@ -144,12 +164,10 @@ class HistoryDataEngine(object):
                 calendarDict['isQuarterEnd'] = d['isQuarterEnd']
                 calendarDict['isYearEnd'] = d['isYearEnd']
                 flt = {'calendarDate': d['calendarDate']}
-
-                self.dbClient[SETTING_DB_NAME]['TradeCal'].update_one(flt, {'$set': calendarDict},
-                                                                           upsert=True)
-            print u'TradeCal下载完成'
+                collection.update_one(flt, {'$set': calendarDict}, upsert=True)
+            print u'Trade Calendar download from datayes, END'
         else:
-            print u'TradeCal下载失败'
+            print u'Trade Calendar download from datayes, Wrong'
     '''2017052500 Add by hetajen end'''
     
     #----------------------------------------------------------------------
@@ -304,7 +322,9 @@ class HistoryDataEngine(object):
         data = self.datayesClient.downloadData(path, params)
         
         if data:
-            today = datetime.now().strftime('%Y%m%d')
+            '''2017052500 Add by hetajen begin'''
+            today = datetime.datetime.now().strftime('%Y%m%d')
+            '''2017052500 Add by hetajen end'''
             
             # 创建datetime索引
             self.dbClient[MINUTE_DB_NAME][symbol].ensure_index([('datetime', pymongo.ASCENDING)], 
@@ -435,45 +455,47 @@ class XH_HistoryDataEngine(object):
 
     '''2017052500 Add by hetajen begin'''
     def downloadFutures5MinBarSina(self, symbol):
-        print u'开始下载%s的5分钟行情' % symbol
+        print u'5minBar download from sina, BEGIN - %s' %symbol
+
+        '''数据库'''
+        dbName = MINUTE5_DB_NAME
+        collectionName = symbol
+        collection = self.dbClient[dbName][collectionName]
+        collection.ensure_index([('datetime', pymongo.ASCENDING)], unique=True) # 创建datetime索引
         # 查询数据库中已有数据的最后日期
-        cl = self.dbClient[MINUTE5_DB_NAME][symbol]
-        cx = cl.find(sort=[('datetime', pymongo.DESCENDING)])
+        cx = collection.find(sort=[('datetime', pymongo.DESCENDING)])
         if cx.count():
-            last = cx[0]
+            last = cx[0][u'datetime']
         else:
-            last = ''
+            last = datetime.datetime(1990, 12, 31, 23, 59, 59)
 
-        # 主力合约
-        if '888' in symbol:
+        '''数据源'''
+        if '888' in symbol: # 主力合约
             url = '%s%s' % (URL_SINA_HIST_M5, symbol.replace('888', '0'))
-        # 交易合约
-        else:
+        else:               # 交易合约
             url = '%s%s' % (URL_SINA_HIST_M5, symbol)
-
-        # 开始下载数据
         html = urllib.urlopen(url).read().decode('gb2312')
         data = json.loads(html)
         # data.reverse()
 
+        '''数据解析&持久化'''
         if data:
-            # 创建datetime索引
-            self.dbClient[MINUTE5_DB_NAME][symbol].ensure_index([('datetime', pymongo.ASCENDING)],
-                                                              unique=True)
-
             for d in data:
                 bar = CtaBarData()
                 bar.vtSymbol = symbol
                 bar.symbol = symbol
                 try:
+                    bar.datetime = datetime.datetime.strptime(d[SINA_DATE], '%Y-%m-%d %H:%M:%S')
+                    bar.datetime = bar.datetime - datetime.timedelta(minutes=5)  # Sina接口的数据有误，So要对5分钟Bar的时间数据进行清洗
+                    if bar.datetime < last:
+                        continue
+
                     # bar.exchange = DATAYES_TO_VT_EXCHANGE.get(d.get('exchangeCD', ''), '')
                     bar.open = d[SINA_O]
                     bar.high = d[SINA_H]
                     bar.low = d[SINA_L]
                     bar.close = d[SINA_C]
 
-                    bar.datetime = datetime.datetime.strptime(d[SINA_DATE], '%Y-%m-%d %H:%M:%S')
-                    bar.datetime = bar.datetime - datetime.timedelta(minutes=5) # Sina接口的数据有误，So要对5分钟Bar的时间数据进行清洗
                     bar.date = bar.datetime.strftime('%Y%m%d')
                     bar.time = bar.datetime.strftime('%H:%M:%S')
                     bar.actionDay = bar.date
@@ -489,55 +511,55 @@ class XH_HistoryDataEngine(object):
                     print d
 
                 flt = {'datetime': bar.datetime}
-                self.dbClient[MINUTE5_DB_NAME][symbol].update_one(flt, {'$set': bar.__dict__}, upsert=True)
+                collection.update_one(flt, {'$set': bar.__dict__}, upsert=True)
 
-                print u'%s下载完成' % symbol
+            print u'5minBar download from sina, END - %s' %symbol
         else:
-            print u'找不到合约%s' % symbol
-    '''2017052500 Add by hetajen end'''
+            print u'5minBar download from sina, Wrong - %s' %symbol
 
     def downloadFuturesDailyBarSina(self, symbol):
-        print u'开始下载%s日行情' % symbol
+        print u'DailyBar download from sina, BEGIN - %s' %symbol
 
+        '''数据库'''
+        dbName = DAILY_DB_NAME
+        collectionName = symbol
+        collection = self.dbClient[dbName][collectionName]
+        collection.ensure_index([('datetime', pymongo.ASCENDING)], unique=True) # 创建datetime索引
         # 查询数据库中已有数据的最后日期
-        cl = self.dbClient[DAILY_DB_NAME][symbol]
-        cx = cl.find(sort=[('datetime', pymongo.DESCENDING)])
+        cx = collection.find(sort=[('datetime', pymongo.DESCENDING)])
         if cx.count():
-            last = cx[0]
+            last = cx[0][u'datetime']
         else:
-            last = ''
+            last = datetime.datetime(1990, 12, 31, 23, 59, 59)
 
-        # 主力合约
-        if '888' in symbol:
+        '''数据源'''
+        if '888' in symbol: # 主力合约
             url = '%s%s' % (URL_SINA_HIST_D, symbol.replace('888', '0'))
-        # 交易合约
-        else:
+        else:               # 交易合约
             url = '%s%s' % (URL_SINA_HIST_D, symbol)
-
-        # 开始下载数据
         html = urllib.urlopen(url).read().decode('gb2312')
         data = json.loads(html)
         # data.reverse()
 
+        '''数据解析&持久化'''
         if data:
-            # 创建datetime索引
-            self.dbClient[DAILY_DB_NAME][symbol].ensure_index([('datetime', pymongo.ASCENDING)],
-                                                              unique=True)
-
             for d in data:
                 bar = CtaBarData()
                 bar.vtSymbol = symbol
                 bar.symbol = symbol
                 try:
+                    '''2017052500 Add by hetajen begin'''
+                    bar.datetime = datetime.datetime.strptime(d[SINA_DATE], '%Y-%m-%d')
+                    if bar.datetime < last:
+                        continue
+                    '''2017052500 Add by hetajen end'''
+
                     # bar.exchange = DATAYES_TO_VT_EXCHANGE.get(d.get('exchangeCD', ''), '')
                     bar.open = d[SINA_O]
                     bar.high = d[SINA_H]
                     bar.low = d[SINA_L]
                     bar.close = d[SINA_C]
 
-                    '''2017052500 Add by hetajen begin'''
-                    bar.datetime = datetime.datetime.strptime(d[SINA_DATE], '%Y-%m-%d')
-                    '''2017052500 Add by hetajen end'''
                     bar.date = bar.datetime.strftime('%Y%m%d')
                     bar.time = bar.datetime.strftime('%H:%M:%S')
                     bar.actionDay = bar.date
@@ -549,11 +571,11 @@ class XH_HistoryDataEngine(object):
                     print d
 
                 flt = {'datetime': bar.datetime}
-                self.dbClient[DAILY_DB_NAME][symbol].update_one(flt, {'$set': bar.__dict__}, upsert=True)
-
-                print u'%s下载完成' % symbol
+                collection.update_one(flt, {'$set': bar.__dict__}, upsert=True)
+            print u'DailyBar download from sina, End - %s' %symbol
         else:
-            print u'找不到合约%s' % symbol
+            print u'DailyBar download from sina, Wrong - %s' %symbol
+    '''2017052500 Add by hetajen end'''
 '''2017050301 Add by hetajen end'''
 
 
