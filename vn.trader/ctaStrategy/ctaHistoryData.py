@@ -501,7 +501,10 @@ class XH_HistoryDataEngine(object):
                     bar.actionDay = bar.date
                     if bar.datetime.time() > datetime.time(hour=20, minute=0):
                         calendarDict = collection.find_one({'calendarDate':datetime.datetime.strptime(bar.date, '%Y%m%d')})
-                        bar.tradingDay = calendarDict['nextTradeDate'].strftime('%Y%m%d')
+                        if calendarDict != None:
+                            bar.tradingDay = calendarDict['nextTradeDate'].strftime('%Y%m%d')
+                        else:
+                            bar.tradingDay = bar.date
                     else:
                         bar.tradingDay = bar.date
 
