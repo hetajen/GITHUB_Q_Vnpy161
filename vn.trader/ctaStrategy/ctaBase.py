@@ -42,6 +42,7 @@ DAILY_DB_NAME = 'VnTrader_Daily_Db'
 MINUTE_DB_NAME = 'VnTrader_1Min_Db'
 '''2017052500 Add by hetajen begin'''
 MINUTE5_DB_NAME = 'VnTrader_5Min_Db'
+TRADECAL_CL_NAME = 'TradeCal' # CL:collection
 '''2017052500 Add by hetajen end'''
 
 # 引擎类型，用于区分当前策略的运行环境

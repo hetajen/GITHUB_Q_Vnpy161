@@ -72,7 +72,7 @@ class HistoryDataEngine(object):
 
         '''数据库'''
         dbName = SETTING_DB_NAME
-        collectionName = 'TradeCal'
+        collectionName = TRADECAL_CL_NAME
         collection = self.dbClient[dbName][collectionName]
         collection.ensure_index([('calendarDate', pymongo.ASCENDING)], unique=True) # 创建索引
         # 查询数据库中已有数据的最后日期
@@ -84,7 +84,7 @@ class HistoryDataEngine(object):
 
         '''数据源'''
         import csv
-        fileName = os.path.join(os.path.dirname(os.path.abspath(__file__)), u'strategy\TradeCal.csv')
+        fileName = os.path.join(os.path.dirname(os.path.abspath(__file__)), u'strategy\\tradeCal.csv')
         reader = csv.reader(file(fileName, 'r'))
 
         '''数据解析&持久化'''
@@ -133,7 +133,7 @@ class HistoryDataEngine(object):
 
         '''数据库'''
         dbName = SETTING_DB_NAME
-        collectionName = 'TradeCal'
+        collectionName = TRADECAL_CL_NAME
         collection = self.dbClient[dbName][collectionName]
         collection.ensure_index([('calendarDate', pymongo.ASCENDING)], unique=True) # 创建索引
         # 查询数据库中已有数据的最后日期
@@ -500,7 +500,7 @@ class XH_HistoryDataEngine(object):
                     bar.time = bar.datetime.strftime('%H:%M:%S')
                     bar.actionDay = bar.date
                     if bar.datetime.time() > datetime.time(hour=20, minute=0):
-                        calendarDict = self.dbClient[SETTING_DB_NAME]['TradeCal'].find_one({'calendarDate':datetime.datetime.strptime(bar.date, '%Y%m%d')})
+                        calendarDict = collection.find_one({'calendarDate':datetime.datetime.strptime(bar.date, '%Y%m%d')})
                         bar.tradingDay = calendarDict['nextTradeDate'].strftime('%Y%m%d')
                     else:
                         bar.tradingDay = bar.date
