@@ -476,7 +476,7 @@ class XH_HistoryDataEngine(object):
             url = '%s%s' % (URL_SINA_HIST_M5, symbol)
         html = urllib.urlopen(url).read().decode('gb2312')
         data = json.loads(html)
-        # data.reverse()
+        data.reverse() # 按时间递增顺序在collection中appand Bar数据（Sina接口获取的5min线数据为减序，故需要reverse）
 
         '''数据解析&持久化'''
         if data:
@@ -500,7 +500,9 @@ class XH_HistoryDataEngine(object):
                     bar.time = bar.datetime.strftime('%H:%M:%S')
                     bar.actionDay = bar.date
                     if bar.datetime.time() > datetime.time(hour=20, minute=0):
-                        calendarDict = collection.find_one({'calendarDate':datetime.datetime.strptime(bar.date, '%Y%m%d')})
+                        '''数据库'''
+                        cl = self.dbClient[SETTING_DB_NAME][TRADECAL_CL_NAME]
+                        calendarDict = cl.find_one({'calendarDate':datetime.datetime.strptime(bar.date, '%Y%m%d')})
                         if calendarDict != None:
                             bar.tradingDay = calendarDict['nextTradeDate'].strftime('%Y%m%d')
                         else:
@@ -542,7 +544,7 @@ class XH_HistoryDataEngine(object):
             url = '%s%s' % (URL_SINA_HIST_D, symbol)
         html = urllib.urlopen(url).read().decode('gb2312')
         data = json.loads(html)
-        # data.reverse()
+        # data.reverse() # 按时间递增顺序在collection中appand Bar数据（Sina接口获取的日线数据即为增序）
 
         '''数据解析&持久化'''
         if data:
