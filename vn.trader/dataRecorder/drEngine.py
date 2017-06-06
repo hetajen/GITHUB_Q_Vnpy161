@@ -177,10 +177,10 @@ class DrEngine(object):
             # 如果第一个TICK或者新的一分钟
             if not bar.datetime or bar.datetime.minute != drTick.datetime.minute:    
                 if bar.vtSymbol:
-                    newBar = copy.copy(bar)
-                    self.insertData(MINUTE_DB_NAME, vtSymbol, newBar)
-                    
                     '''2017050301 Delete by hetajen begin'''
+                    # newBar = copy.copy(bar)
+                    # self.insertData(MINUTE_DB_NAME, vtSymbol, newBar)
+                    
                     # if vtSymbol in self.activeSymbolDict:
                     #     activeSymbol = self.activeSymbolDict[vtSymbol]
                     #     self.insertData(MINUTE_DB_NAME, activeSymbol, newBar)
